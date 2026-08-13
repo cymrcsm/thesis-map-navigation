@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>SLSU Campus Interactive Kiosk</title>
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  
+  <style>
+    * { box-sizing: border-box; touch-action: manipulation; }
+    body { margin: 0; padding: 0; display: flex; height: 100vh; font-family: 'Segoe UI', sans-serif; background-color: #0f172a; color: #f8fafc; }
+    
+    #sidebar { width: 380px; background: #1e293b; padding: 20px; display: flex; flex-direction: column; gap: 16px; z-index: 1000; }
+    h1 { font-size: 22px; margin: 0; color: #38bdf8; }
+    
+    .search-box { display: flex; }
+    #searchInput { width: 100%; padding: 12px; font-size: 16px; border-radius: 8px; border: 1px solid #475569; background: #0f172a; color: white; }
+    
+    .category-group { display: flex; gap: 8px; flex-wrap: wrap; }
+    .chip { padding: 8px 14px; border-radius: 20px; background: #334155; color: white; border: 1px solid #475569; font-size: 14px; cursor: pointer; }
+    .chip.active { background: #0284c7; border-color: #38bdf8; }
+    
+    #detailsCard { background: #0f172a; border: 1px solid #334155; padding: 16px; border-radius: 12px; margin-top: auto; max-height: 40%; overflow-y: auto; }
+    
+    #map-container { flex: 1; position: relative; }
+    #map { width: 100%; height: 100%; background: #020617; }
+    
+    #floor-controls { position: absolute; top: 20px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 8px; background: rgba(30, 41, 59, 0.9); padding: 10px; border-radius: 12px; }
+    .floor-btn { padding: 10px 16px; font-size: 15px; font-weight: bold; border-radius: 6px; border: none; background: #334155; color: white; cursor: pointer; }
+    .floor-btn.active { background: #0284c7; }
+  </style>
+</head>
+<body>
+
+  <div id="sidebar">
+    <div>
+      <h1>SLSU Campus Directory</h1>
+      <p style="margin: 4px 0 0 0; color: #94a3b8; font-size: 14px;">Southern Leyte State University</p>
+    </div>
+
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Search office, room, or building..." oninput="handleSearch(this.value)">
+    </div>
+
+    <div class="category-group">
+      <button class="chip active" onclick="filterCategory('All', this)">All</button>
+      <button class="chip" onclick="filterCategory('Administrative', this)">Admin</button>
+      <button class="chip" onclick="filterCategory('Academic', this)">Academic</button>
+      <button class="chip" onclick="filterCategory('Services', this)">Services</button>
+    </div>
+
+    <div id="detailsCard">
+      <h2 style="margin-top:0; color:#38bdf8; font-size:18px;">Select a Location</h2>
+      <p>Tap any building pin on the map or search above to view offices and floor plans.</p>
+    </div>
+  </div>
+
+  <div id="map-container">
+    <div id="map"></div>
+
+    <div id="floor-controls" style="display: none;">
+      <span style="font-size: 11px; text-align: center; color: #94a3b8; font-weight: bold;">FLOOR</span>
+      <div id="floorButtons" style="display: flex; flex-direction: column; gap: 6px;"></div>
+    </div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 :root {
-  /* Realtime Colors Theme Tokens */
+  /* Theme Tokens */
   --bg-color: #05070b;
   --text-color: #eef2f6;
   --text-muted: #94a3b8;
@@ -8,7 +8,7 @@
   --accent-color: #4ca3e3;
 
   /* Surface & Border Tokens */
-  --surface-sidebar: #05070B;
+  --surface-sidebar: #05070b;
   --surface-box: #0e1622;
   --surface-input: #121c2b;
   --surface-card: #142030;
@@ -139,7 +139,7 @@ body, html {
   display: none;
 }
 
-/* 1. Tutorial / Quick Guide View (Default View) */
+/* 1. Tutorial / Quick Guide View */
 .tutorial-tag {
   display: inline-block;
   background: rgba(76, 163, 227, 0.15);
@@ -279,28 +279,46 @@ body, html {
   margin-top: 2px;
 }
 
+/* Action Buttons */
 .detail-actions {
-  margin-top: 20px;
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .action-btn {
   width: 100%;
-  padding: 12px;
-  background: var(--accent-color);
-  color: var(--bg-color);
+  padding: 11px;
   border: none;
   border-radius: 10px;
   font-size: 13px;
   font-weight: bold;
   cursor: pointer;
-  transition: opacity 0.15s ease;
+  transition: opacity 0.15s ease, transform 0.1s ease;
 }
 
-.action-btn:hover {
-  opacity: 0.9;
+.action-btn:active {
+  transform: scale(0.98);
 }
 
-/* --- RIGHT COLUMN: MAP & HORIZONTAL CONTROLS --- */
+.directions-btn {
+  background: #22c55e;
+  color: #05070b;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+.secondary-btn {
+  background: var(--surface-card);
+  color: var(--text-color);
+  border: 1px solid var(--border-subtle);
+}
+
+.secondary-btn:hover {
+  background: var(--surface-input);
+}
+
+/* --- RIGHT COLUMN: MAP & CONTROLS --- */
 .map-container {
   flex: 1;
   height: 100vh;
@@ -318,7 +336,7 @@ body, html {
   background-color: var(--bg-color) !important;
 }
 
-/* Horizontal Controls Bar (Bottom Right) */
+/* Controls Bar (Bottom Right) */
 .horizontal-controls-bar {
   position: absolute;
   bottom: 24px;
@@ -327,7 +345,7 @@ body, html {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .ctrl-group {
@@ -337,11 +355,12 @@ body, html {
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+  border: 1px solid var(--border-subtle);
 }
 
 .ctrl-btn {
-  width: 46px;
-  height: 44px;
+  width: 44px;
+  height: 42px;
   background: transparent;
   border: none;
   color: var(--text-color);
@@ -363,6 +382,72 @@ body, html {
   color: var(--bg-color);
 }
 
+/* Set Kiosk Placement State */
+#set-kiosk-btn.active-placement {
+  background: #f59e0b !important;
+  color: #05070b !important;
+  animation: pulse-kiosk-btn 0.9s infinite alternate;
+}
+
+@keyframes pulse-kiosk-btn {
+  from { transform: scale(1); }
+  to { transform: scale(1.08); }
+}
+
+/* Kiosk Custom Pulsing Marker */
+.kiosk-pulsing-marker {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  background: #2563eb;
+  border: 3px solid #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 0 12px rgba(37, 99, 235, 0.85);
+}
+
+.kiosk-pulsing-marker::after {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(37, 99, 235, 0.45);
+  animation: pulse-ring 1.8s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.6); opacity: 1; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+/* Route Line Animation */
+.leaflet-interactive.route-line {
+  stroke-dasharray: 12, 12;
+  animation: dash 1s linear infinite;
+}
+
+@keyframes dash {
+  to { stroke-dashoffset: -24; }
+}
+
+/* Custom Tooltip Dark Styling */
+.leaflet-tooltip {
+  background: rgba(5, 7, 11, 0.92) !important;
+  border: 1px solid var(--border-subtle) !important;
+  color: var(--text-color) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  border-radius: 6px !important;
+  padding: 4px 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+}
+
+.leaflet-tooltip-top:before {
+  border-top-color: rgba(5, 7, 11, 0.92) !important;
+}
+
 /* Coordinate Inspector */
 #coord-inspector {
   position: absolute;
@@ -375,4 +460,5 @@ body, html {
   font-family: monospace;
   font-size: 12px;
   z-index: 999;
+  border: 1px solid var(--border-subtle);
 }

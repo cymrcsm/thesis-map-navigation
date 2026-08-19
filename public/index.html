@@ -6,7 +6,7 @@
   <title>SLSU Campus Navigation Kiosk</title>
   <!-- Standard Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <!-- Your separated custom CSS file -->
+  <!-- Custom CSS -->
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -25,7 +25,7 @@
 
         <div class="dropdown-wrapper">
           <select id="category-dropdown">
-            <option value="ALL">All Categories (16)</option>
+            <option value="ALL">All Categories</option>
             <!-- Dynamically populated by JS -->
           </select>
         </div>
@@ -47,7 +47,7 @@
               <div class="step-number">1</div>
               <div class="step-content">
                 <strong>Search or Filter</strong>
-                <p>Type an office, room code (e.g., <em>RS-101</em>), or acronym (e.g., <em>REGISTRAR</em>) in the search bar, or filter by category above.</p>
+                <p>Type an office, room code, or acronym in the search bar, or filter by category above.</p>
               </div>
             </div>
 
@@ -62,8 +62,8 @@
             <div class="step-card">
               <div class="step-number">3</div>
               <div class="step-content">
-                <strong>Explore & Switch Floors</strong>
-                <p>Drag the map to pan around. Use the <strong>GF / 2F / 3F</strong> floor selector at the bottom right to view multi-story buildings.</p>
+                <strong>Ask for Directions</strong>
+                <p>Select any destination pin and tap <strong>Ask for Directions</strong> to view an active route line from your current kiosk position.</p>
               </div>
             </div>
 
@@ -114,7 +114,8 @@
           </div>
 
           <div class="detail-actions">
-            <button id="recenter-room-btn" class="action-btn primary">Focus on Map</button>
+            <button id="get-directions-btn" class="action-btn directions-btn">🧭 Ask for Directions</button>
+            <button id="recenter-room-btn" class="action-btn secondary-btn">Focus on Map</button>
           </div>
         </div>
 
@@ -127,6 +128,11 @@
 
       <!-- Bottom-Right Horizontal Controls Bar -->
       <div class="horizontal-controls-bar">
+        <!-- Set Current Kiosk Location Button -->
+        <div class="ctrl-group">
+          <button id="set-kiosk-btn" class="ctrl-btn" title="Set Current Kiosk Position">📍</button>
+        </div>
+
         <!-- Floor Layer Selector -->
         <div class="ctrl-group floor-group">
           <button class="ctrl-btn floor-btn active" data-floor="1">GF</button>
@@ -146,14 +152,14 @@
         </div>
       </div>
 
-      <!-- Bottom Coordinate Inspector -->
+      <!-- Coordinate Inspector & Mode Indicator -->
       <div id="coord-inspector">Click map to log coordinates</div>
     </main>
   </div>
 
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <!-- Your separated custom JS file -->
+  <!-- Custom JS Application -->
   <script src="js/app.js"></script>
 </body>
 </html>

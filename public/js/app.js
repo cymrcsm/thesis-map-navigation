@@ -1,134 +1,306 @@
-// SLSU Main Campus Coordinates (Sogod)
-const SLSU_COORDS = [10.39069930895956, 124.98074286229156];
-const map = L.map('map', { zoomControl: false }).setView(SLSU_COORDS, 18);
+// ==========================================
+// 1. CATEGORY & LOCATION DATA REGISTRY
+// ==========================================
 
-// Tile Layer
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  maxZoom: 20,
-  attribution: '© OpenStreetMap contributors | SLSU Kiosk'
-}).addTo(map);
+const CATEGORIES = [
+  { id: "ALL", name: "All Categories" },
+  { id: "Executive", name: "Executive & Administrative Offices", color: "#4b8df2" },
+  { id: "Archives", name: "Archives & Records", color: "#ab6a30" },
+  { id: "Auxiliary", name: "Auxiliary & Institutional Services", color: "#0891b2" }
+];
 
-L.control.zoom({ position: 'bottomright' }).addTo(map);
-
-let markersGroup = L.layerGroup().addTo(map);
-let selectedBuilding = null;
-let currentCategory = 'All';
-
-// Fixed "YOU ARE HERE" Pin
-L.marker(SLSU_COORDS, {
-  icon: L.divIcon({
-    className: 'kiosk-pin',
-    html: '<div style="background:#ef4444; color:white; padding:6px 10px; border-radius:20px; font-weight:bold; font-size:12px; white-space:nowrap;">📍 YOU ARE HERE</div>'
-  })
-}).addTo(map);
-
-// Fetch Buildings
-async function loadBuildings(category = 'All') {
-  try {
-    const res = await fetch(`/api/buildings?category=${category}`);
-    const result = await res.json();
-    
-    markersGroup.clearLayers();
-
-    result.data.forEach(building => {
-      const marker = L.marker([building.latitude, building.longitude]).addTo(markersGroup);
-      marker.bindPopup(`<b>${building.name}</b><br>Category: ${building.category}`);
-      marker.on('click', () => selectBuilding(building));
-    });
-  } catch (err) {
-    console.error('Failed to load buildings:', err);
+// Note: Coordinates are written as [X, Y] exactly as shown in the inspector log
+const LOCATIONS = [
+  {
+    id: "office-president",
+    name: "Office of the President",
+    acronym: "OP",
+    building: "Administration Building",
+    category: "Executive",
+    floor: "Ground Floor",
+    hours: "8:00 AM - 5:00 PM (Mon - Fri)",
+    coords: [5457, 2205], // [X, Y]
+    description: "The primary executive office for university governance and administrative leadership."
+  },
+  {
+    id: "student-records-archive",
+    name: "Student Records Archive",
+    acronym: "SRA",
+    building: "Administration Building",
+    category: "Archives",
+    floor: "Ground Floor",
+    hours: "8:00 AM - 5:00 PM (Mon - Fri)",
+    coords: [5465, 2031], // [X, Y]
+    description: "Central repository for student academic transcripts, permanent records, and enrollment archives."
+  },
+  {
+    id: "ovpaa-ovpaf",
+    name: "Office of the Vice President for Academic Affairs & Office of the Vice President for Administration and Finance",
+    acronym: "OVPAA / OVPAF",
+    building: "Administration Building",
+    category: "Executive",
+    floor: "Ground Floor",
+    hours: "8:00 AM - 5:00 PM (Mon - Fri)",
+    coords: [4873, 2172], // [X, Y]
+    description: "Executive offices coordinating university curriculum, academic policies, operational administration, and fiscal management."
+  },
+  {
+    id: "human-resource",
+    name: "Human Resource Management",
+    acronym: "HRMO",
+    building: "Administration Building",
+    category: "Executive",
+    floor: "Ground Floor",
+    hours: "8:00 AM - 5:00 PM (Mon - Fri)",
+    coords: [4609, 2216], // [X, Y]
+    description: "Oversees personnel management, employee relations, recruitment, and faculty benefits."
+  },
+  {
+    id: "bargo",
+    name: "Business, Auxiliary and Resource Generation Office",
+    acronym: "BARGO",
+    building: "Administration Building",
+    category: "Auxiliary",
+    floor: "Ground Floor",
+    hours: "8:00 AM - 5:00 PM (Mon - Fri)",
+    coords: [4771, 2720], // [X, Y]
+    description: "Handles university auxiliary ventures, institutional income generation, and business facility rentals."
+  },
+  {
+    id: "archives-center",
+    name: "Archives Center",
+    acronym: "ARCHIVES",
+    building: "Administration Building",
+    category: "Archives",
+    floor: "Ground Floor",
+    hours: "8:00 AM - 5:00 PM (Mon - Fri)",
+    coords: [4586, 1745], // [X, Y]
+    description: "Institutional repository preserving historical records, university publications, and institutional artifacts."
+  },
+  {
+    id: "coa",
+    name: "Commission on Audit",
+    acronym: "COA",
+    building: "Administration Building",
+    category: "Executive",
+    floor: "Ground Floor",
+    hours: "8:00 AM - 5:00 PM (Mon - Fri)",
+    coords: [4706, 1559], // [X, Y]
+    description: "Government auditing office reviewing university financial accounts, fiscal accountability, and compliance."
+  },
+  {
+    id: "quality-assurance",
+    name: "Office of the Director for Quality Assurance",
+    acronym: "ODQA",
+    building: "Administration Building",
+    category: "Executive",
+    floor: "Ground Floor",
+    hours: "8:00 AM - 5:00 PM (Mon - Fri)",
+    coords: [4878, 1573], // [X, Y]
+    description: "Leads institutional accreditation, quality management systems, and academic standard compliance."
+  },
+  {
+    id: "gad-center",
+    name: "Gender and Development Center (GAD)",
+    acronym: "GAD",
+    building: "Student Services Building",
+    category: "Auxiliary",
+    floor: "Ground Floor",
+    hours: "8:00 AM - 5:00 PM (Mon - Fri)",
+    coords: [5109, 1572], // [X, Y]
+    description: "Promotes gender-responsive programs, advocacy initiatives, and campus-wide inclusivity support."
   }
+];
+
+// ==========================================
+// 2. HELPER FUNCTIONS
+// ==========================================
+
+// Converts standard [X, Y] data format to Leaflet's internal [Y, X] (Lat, Lng) format
+function toLeafletCoords(xyCoords) {
+  return [xyCoords[1], xyCoords[0]];
 }
 
-// Select Building & Floor Handler
-async function selectBuilding(building) {
-  selectedBuilding = building;
-  map.flyTo([building.latitude, building.longitude], 19, { duration: 1 });
-
-  const floorContainer = document.getElementById('floorButtons');
-  const floorControls = document.getElementById('floor-controls');
-  floorContainer.innerHTML = '';
-  floorControls.style.display = 'flex';
-
-  for (let f = 1; f <= building.total_floors; f++) {
-    const btn = document.createElement('button');
-    btn.className = `floor-btn ${f === 1 ? 'active' : ''}`;
-    btn.innerText = `Floor ${f}`;
-    btn.onclick = () => {
-      document.querySelectorAll('.floor-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      loadFloorRooms(building.id, f);
-    };
-    floorContainer.appendChild(btn);
-  }
-
-  loadFloorRooms(building.id, 1);
+function getCategoryColor(categoryName) {
+  const cat = CATEGORIES.find(c => c.id === categoryName);
+  return cat ? cat.color : '#4b8df2';
 }
 
-// Fetch Offices
-async function loadFloorRooms(buildingId, floorLevel) {
-  try {
-    const res = await fetch(`/api/buildings/${buildingId}/floors/${floorLevel}/rooms`);
-    const data = await res.json();
+// ==========================================
+// 3. LEAFLET MAP INITIALIZATION
+// ==========================================
 
-    let roomListHtml = data.rooms.map(r => `
-      <li style="margin-bottom:8px;">
-        <strong>${r.office_name}</strong> (Room ${r.room_number})<br>
-        <small style="color:#94a3b8;">Head: ${r.department_head || 'N/A'}</small><br>
-        <small style="color:#38bdf8;">Hours: ${r.operating_hours}</small>
-      </li>
-    `).join('');
+const MAP_WIDTH = 7852;
+const MAP_HEIGHT = 12060;
+const bounds = [[0, 0], [MAP_HEIGHT, MAP_WIDTH]];
 
-    document.getElementById('detailsCard').innerHTML = `
-      <h2 style="margin-top:0; color:#38bdf8; font-size:18px;">${selectedBuilding.name}</h2>
-      <p style="font-size:13px; color:#94a3b8;">${selectedBuilding.description}</p>
-      <hr style="border-color:#334155;">
-      <h3 style="font-size:15px;">Floor ${floorLevel} Directory (${data.count} offices):</h3>
-      <ul style="padding-left:18px;">${roomListHtml.length ? roomListHtml : '<li>No listed offices on this floor.</li>'}</ul>
-    `;
-  } catch (err) {
-    console.error('Failed to load rooms:', err);
-  }
+const map = L.map('map', {
+  crs: L.CRS.Simple,
+  minZoom: -4,
+  maxZoom: 1,
+  zoomSnap: 0.25,
+  maxBounds: bounds,
+  maxBoundsViscosity: 1.0,
+  zoomControl: false,
+  attributionControl: false
+});
+
+L.imageOverlay('assets/groundFloor_layer.png', bounds).addTo(map);
+
+function autoCenterCampus(animate = true) {
+  map.fitBounds(bounds, { animate: animate });
+  map.panBy([-180, 0], { animate: animate });
+}
+autoCenterCampus(false);
+
+setTimeout(() => map.invalidateSize(), 200);
+
+// ==========================================
+// 4. UI ELEMENT REFERENCES
+// ==========================================
+
+const searchInput = document.getElementById('search-input');
+const clearSearchBtn = document.getElementById('clear-search-btn');
+const categoryDropdown = document.getElementById('category-dropdown');
+
+const tutorialView = document.getElementById('tutorial-view');
+const detailView = document.getElementById('detail-view');
+const backToTutorialBtn = document.getElementById('back-to-tutorial-btn');
+const recenterRoomBtn = document.getElementById('recenter-room-btn');
+
+const detailBadge = document.getElementById('detail-badge');
+const detailTitle = document.getElementById('detail-title');
+const detailBuilding = document.getElementById('detail-building');
+const detailFloor = document.getElementById('detail-floor');
+const detailHours = document.getElementById('detail-hours');
+const detailDesc = document.getElementById('detail-desc');
+
+let activeSelectedLocation = null;
+const markerLayer = L.layerGroup().addTo(map);
+
+// ==========================================
+// 5. POPULATE DROPDOWN
+// ==========================================
+
+categoryDropdown.innerHTML = '';
+CATEGORIES.forEach(cat => {
+  const opt = document.createElement('option');
+  opt.value = cat.id;
+  opt.textContent = cat.name;
+  categoryDropdown.appendChild(opt);
+});
+
+// ==========================================
+// 6. SVG MARKER CREATION & RENDERING
+// ==========================================
+
+const locationMarkerIcon = L.icon({
+  iconUrl: 'assets/location.svg',
+  iconSize: [36, 36],
+  iconAnchor: [18, 36],
+  popupAnchor: [0, -36]
+});
+
+function renderMarkers(selectedCategory = "ALL", searchQuery = "") {
+  markerLayer.clearLayers();
+  const q = searchQuery.toLowerCase().trim();
+
+  const filtered = LOCATIONS.filter(loc => {
+    const matchesCat = selectedCategory === "ALL" || loc.category === selectedCategory;
+    const matchesSearch = !q || 
+      loc.name.toLowerCase().includes(q) || 
+      loc.acronym.toLowerCase().includes(q) || 
+      loc.building.toLowerCase().includes(q);
+    return matchesCat && matchesSearch;
+  });
+
+  filtered.forEach(loc => {
+    // Converts [X, Y] -> [Y, X] for Leaflet marker placement
+    const leafletPosition = toLeafletCoords(loc.coords);
+    const marker = L.marker(leafletPosition, { icon: locationMarkerIcon });
+
+    marker.on('click', () => showLocationDetails(loc));
+    markerLayer.addLayer(marker);
+  });
 }
 
-function filterCategory(category, element) {
-  currentCategory = category;
-  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-  element.classList.add('active');
-  loadBuildings(category);
+function showLocationDetails(loc) {
+  activeSelectedLocation = loc;
+  const pinColor = getCategoryColor(loc.category);
+
+  detailBadge.textContent = loc.category;
+  detailBadge.style.background = `${pinColor}1A`;
+  detailBadge.style.color = pinColor;
+
+  detailTitle.textContent = loc.name;
+  detailBuilding.textContent = `${loc.building} (${loc.acronym})`;
+  detailFloor.textContent = loc.floor;
+  detailHours.textContent = loc.hours;
+  detailDesc.textContent = loc.description;
+
+  tutorialView.classList.add('hidden');
+  detailView.classList.remove('hidden');
+
+  // Converts [X, Y] -> [Y, X] for Leaflet flyTo
+  const leafletPosition = toLeafletCoords(loc.coords);
+  map.flyTo(leafletPosition, -0.5, { animate: true, duration: 0.8 });
 }
 
-async function handleSearch(query) {
-  if (!query || query.trim() === '') {
-    loadBuildings(currentCategory);
-    return;
-  }
-
-  try {
-    const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-    const data = await res.json();
-
-    if (data.results.length > 0) {
-      let searchHtml = data.results.map(r => `
-        <div style="margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid #334155; cursor:pointer;" onclick="map.flyTo([${r.latitude}, ${r.longitude}], 19)">
-          <strong style="color:#38bdf8;">${r.office_name}</strong> (Room ${r.room_number})<br>
-          <small style="color:#94a3b8;">Building: ${r.building_name} - Floor ${r.floor_level}</small>
-        </div>
-      `).join('');
-
-      document.getElementById('detailsCard').innerHTML = `
-        <h2 style="margin-top:0; color:#38bdf8; font-size:18px;">Search Results (${data.match_count})</h2>
-        ${searchHtml}
-      `;
-    } else {
-      document.getElementById('detailsCard').innerHTML = `
-        <h2 style="margin-top:0; color:#38bdf8; font-size:18px;">No Results Found</h2>
-        <p>No matching offices found for "${query}".</p>
-      `;
-    }
-  } catch (err) {
-    console.error('Search error:', err);
-  }
+function showTutorialView() {
+  activeSelectedLocation = null;
+  detailView.classList.add('hidden');
+  tutorialView.classList.remove('hidden');
 }
 
-window.onload = () => loadBuildings('All');
+// ==========================================
+// 7. EVENT LISTENERS
+// ==========================================
+
+backToTutorialBtn.addEventListener('click', showTutorialView);
+
+recenterRoomBtn.addEventListener('click', () => {
+  if (activeSelectedLocation) {
+    const leafletPosition = toLeafletCoords(activeSelectedLocation.coords);
+    map.flyTo(leafletPosition, 0, { animate: true });
+  }
+});
+
+searchInput.addEventListener('input', (e) => {
+  renderMarkers(categoryDropdown.value, e.target.value);
+});
+
+clearSearchBtn.addEventListener('click', () => {
+  searchInput.value = '';
+  renderMarkers(categoryDropdown.value, '');
+});
+
+categoryDropdown.addEventListener('change', (e) => {
+  renderMarkers(e.target.value, searchInput.value);
+});
+
+// Map controls
+document.getElementById('zoom-in').addEventListener('click', () => map.zoomIn());
+document.getElementById('zoom-out').addEventListener('click', () => map.zoomOut());
+document.getElementById('recenter-map-btn').addEventListener('click', () => {
+  autoCenterCampus(true);
+  showTutorialView();
+});
+
+// Floor buttons
+document.querySelectorAll('.floor-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.floor-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+
+// Coordinate Inspector: Outputs exact [X, Y] to match LOCATIONS array format
+const inspector = document.getElementById('coord-inspector');
+map.on('click', (e) => {
+  const y = Math.round(e.latlng.lat);
+  const x = Math.round(e.latlng.lng);
+  inspector.innerText = `coords: [${x}, ${y}]`;
+});
+
+// Initial Marker Render
+renderMarkers();
